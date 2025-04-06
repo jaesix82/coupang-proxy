@@ -35,6 +35,11 @@ const message = `${method} ${urlPath}\n${timestamp}\n${ACCESS_KEY}`;
   };
 
   try {
+    console.log('🧾 Signing message:');
+    console.log(message);
+    console.log('🔐 Signature:', signature);
+    console.log('🔑 Authorization:', `CEA ${ACCESS_KEY}:${signature}`);
+
     const response = await axios.get(`https://api-gateway.coupang.com${urlPath}`, {
       headers,
       params: {
