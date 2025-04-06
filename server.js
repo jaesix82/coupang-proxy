@@ -21,9 +21,8 @@ app.get('/coupang/orders', async (req, res) => {
   const method = 'GET';
   const timestamp = Date.now().toString();
 
-  const message = `${method} ${urlPath}
-${timestamp}
-${ACCESS_KEY}`;
+const message = `${method} ${urlPath}\n${timestamp}\n${ACCESS_KEY}`;
+
   const signature = crypto
     .createHmac('sha256', SECRET_KEY)
     .update(message)
