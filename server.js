@@ -10,6 +10,10 @@ const ACCESS_KEY = process.env.ACCESS_KEY;
 const SECRET_KEY = process.env.SECRET_KEY;
 const VENDOR_ID = process.env.VENDOR_ID;
 
+console.log("🧾 ACCESS_KEY:", ACCESS_KEY);
+console.log("🔐 SECRET_KEY:", SECRET_KEY);
+console.log("🏢 VENDOR_ID:", VENDOR_ID);
+
 app.get('/coupang/orders', async (req, res) => {
   const createdAtFrom = '2025-03-01T00:00:00';
   const createdAtTo = '2025-03-31T23:59:59';
