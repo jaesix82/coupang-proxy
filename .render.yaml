@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: coupang-proxy
+    env: node
+    plan: pro
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: ACCESS_KEY
+        sync: false
+      - key: SECRET_KEY
+        sync: false
+      - key: VENDOR_ID
+        sync: false
