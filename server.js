@@ -17,16 +17,26 @@ console.log("🏢 VENDOR_ID:", VENDOR_ID);
 app.get('/coupang/orders', async (req, res) => {
   const createdAtFrom = '2025-03-01T00:00:00';
   const createdAtTo = '2025-03-31T23:59:59';
-  const urlPath = `/v2/providers/openapi/apis/api/v4/vendors/${VENDOR_ID}/ordersheets`;
   const method = 'GET';
+
+  // ❗ URL path는 쿼리 없이, 서명용으로만 사용
+  const urlPath = `/v2/providers/openapi/apis/api/v4/vendors/${VENDOR_ID}/ordersheets`;
+  const fullUrl = `https://api-gateway.coupang.com${urlPath}`;
   const timestamp = Date.now().toString();
 
-const message = method + ' ' + urlPath + '\n' + timestamp + '\n' + ACCESS_KEY;
+  // ✅ 메시지는 쿼리 없이 정확히 이 형식
+  const message = method + ' ' + urlPath + '\n' + timestamp + '\n' + ACCESS_KEY;
 
+  // 🔐 서명 생성
   const signature = crypto
     .createHmac('sha256', SECRET_KEY)
     .update(message)
     .digest('base64');
+
+  // 🧾 디버깅 로그
+  console.log('🧾 Signing message:\n' + message);
+  console.log('🔐 Signature:', signature);
+  console.log('🔑 Authorization:', `CEA ${ACCESS_KEY}:${signature}`);
 
   const headers = {
     Authorization: `CEA ${ACCESS_KEY}:${signature}`,
@@ -35,12 +45,7 @@ const message = method + ' ' + urlPath + '\n' + timestamp + '\n' + ACCESS_KEY;
   };
 
   try {
-    console.log('🧾 Signing message:');
-    console.log(message);
-    console.log('🔐 Signature:', signature);
-    console.log('🔑 Authorization:', `CEA ${ACCESS_KEY}:${signature}`);
-
-    const response = await axios.get(`https://api-gateway.coupang.com${urlPath}`, {
+    const response = await axios.get(fullUrl, {
       headers,
       params: {
         createdAtFrom,
@@ -50,13 +55,14 @@ const message = method + ' ' + urlPath + '\n' + timestamp + '\n' + ACCESS_KEY;
         pageNum: 1
       }
     });
+
     res.json(response.data);
   } catch (error) {
-    console.error(error.response?.data || error.message);
+    console.error('❌ Coupang API Error:', error.response?.data || error.message);
     res.status(500).json({ error: error.message });
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
