@@ -1,39 +1,51 @@
 const express = require('express');
 const axios = require('axios');
 const crypto = require('crypto');
-require('dotenv').config();
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const ACCESS_KEY = process.env.ACCESS_KEY;
-const SECRET_KEY = process.env.SECRET_KEY;
-const VENDOR_ID = process.env.VENDOR_ID;
+// 계정별 환경변수 설정
+const ACCOUNTS = {
+  acc1: {
+    ACCESS_KEY: process.env.ACCESS_KEY_ACC1,
+    SECRET_KEY: process.env.SECRET_KEY_ACC1,
+    VENDOR_ID: process.env.VENDOR_ID_ACC1
+  },
+  acc2: {
+    ACCESS_KEY: process.env.ACCESS_KEY_ACC2,
+    SECRET_KEY: process.env.SECRET_KEY_ACC2,
+    VENDOR_ID: process.env.VENDOR_ID_ACC2
+  },
+  acc3: {
+    ACCESS_KEY: process.env.ACCESS_KEY_ACC3,
+    SECRET_KEY: process.env.SECRET_KEY_ACC3,
+    VENDOR_ID: process.env.VENDOR_ID_ACC3
+  }
+};
 
-console.log("🧾 ACCESS_KEY:", ACCESS_KEY);
-console.log("🔐 SECRET_KEY:", SECRET_KEY);
-console.log("🏢 VENDOR_ID:", VENDOR_ID);
+// 정적 파일 서빙 (public/index.html)
+app.use(express.static(path.join(__dirname, 'public')));
 
+// 주문조회 API 엔드포인트
 app.get('/coupang/orders', async (req, res) => {
+  const accountKey = req.query.account || 'acc1';
+  const account = ACCOUNTS[accountKey];
+
+  if (!account) {
+    return res.status(400).json({ error: `Invalid account: ${accountKey}` });
+  }
+
+  const { ACCESS_KEY, SECRET_KEY, VENDOR_ID } = account;
+
   const createdAtFrom = '2025-03-01T00:00:00';
   const createdAtTo = '2025-03-31T23:59:59';
   const method = 'GET';
-
   const urlPath = `/v2/providers/openapi/apis/api/v4/vendors/${VENDOR_ID}/ordersheets`;
-  const fullUrl = `https://api-gateway.coupang.com${urlPath}`;
   const timestamp = Date.now().toString();
-
-  // ✅ 공식 문서 기준 메시지 포맷 (줄바꿈 중요!)
-  const message = `${method}\n${urlPath}\n${timestamp}\n${ACCESS_KEY}`;
-
-  const signature = crypto
-    .createHmac('sha256', SECRET_KEY)
-    .update(message)
-    .digest('base64');
-
-  console.log('🧾 Signing message:\n' + message);
-  console.log('🔐 Signature:', signature);
-  console.log('🔑 Authorization:', `CEA ${ACCESS_KEY}:${signature}`);
+  const message = `${method} ${urlPath}\n${timestamp}\n${ACCESS_KEY}`;
+  const signature = crypto.createHmac('sha256', SECRET_KEY).update(message).digest('base64');
 
   const headers = {
     Authorization: `CEA ${ACCESS_KEY}:${signature}`,
@@ -41,8 +53,12 @@ app.get('/coupang/orders', async (req, res) => {
     'Content-Type': 'application/json'
   };
 
+  console.log(`🧾 Account: ${accountKey}`);
+  console.log(`🔑 Authorization: CEA ${ACCESS_KEY}:${signature}`);
+  console.log(`📤 Requesting: ${urlPath}`);
+
   try {
-    const response = await axios.get(fullUrl, {
+    const response = await axios.get(`https://api-gateway.coupang.com${urlPath}`, {
       headers,
       params: {
         createdAtFrom,
@@ -61,5 +77,5 @@ app.get('/coupang/orders', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🚀 Server is running on port ${PORT}`);
 });
