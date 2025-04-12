@@ -44,7 +44,7 @@ app.get('/coupang/orders', async (req, res) => {
   const method = 'GET';
   const urlPath = `/v2/providers/openapi/apis/api/v4/vendors/${VENDOR_ID}/ordersheets`;
   const timestamp = Date.now().toString();
-  const message = `${method} ${urlPath}\n${timestamp}\n${ACCESS_KEY}`;
+  const message = `${method}\n${urlPath}\n${timestamp}\n${ACCESS_KEY}`;
   const signature = crypto.createHmac('sha256', SECRET_KEY).update(message).digest('base64');
 
   const headers = {
