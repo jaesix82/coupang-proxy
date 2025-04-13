@@ -1,7 +1,9 @@
+// server.js
 const express = require('express');
 const axios = require('axios');
 const crypto = require('crypto');
 const path = require('path');
+const puppeteer = require('puppeteer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -20,7 +22,7 @@ const ACCOUNTS = {
   },
   acc3: {
     ACCESS_KEY: process.env.ACCESS_KEY_ACC3,
-    SECRET_KEY: process.env.SECRET_KEY_ACC3,
+    SECRET_KEY: process.env.SECCESS_KEY_ACC3,
     VENDOR_ID: process.env.VENDOR_ID_ACC3
   }
 };
@@ -73,6 +75,48 @@ app.get('/coupang/orders', async (req, res) => {
   } catch (error) {
     console.error('❌ Coupang API Error:', error.response?.data || error.message);
     res.status(500).json({ error: error.message });
+  }
+});
+
+// 쿠팡 검색결과 크롤링 엔드포인트
+app.get('/crawl/search', async (req, res) => {
+  const query = req.query.q;
+  if (!query) return res.status(400).json({ error: 'Missing query parameter: q' });
+
+  try {
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+    const page = await browser.newPage();
+    await page.setUserAgent(
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/113.0.0.0 Safari/537.36'
+    );
+
+    const searchUrl = `https://www.coupang.com/np/search?q=${encodeURIComponent(query)}&channel=user`;
+    await page.goto(searchUrl, { waitUntil: 'domcontentloaded' });
+
+    const data = await page.evaluate(() => {
+      const items = Array.from(document.querySelectorAll('.search-product')).slice(0, 40);
+      return items.map(item => {
+        const title = item.querySelector('.name')?.innerText || '';
+        const price = item.querySelector('.price-value')?.innerText || '';
+        const rating = item.querySelector('.rating')?.innerText || '';
+        const reviewCount = item.querySelector('.rating-total-count')?.innerText?.replace(/[()]/g, '') || '';
+        const image = item.querySelector('img')?.src || '';
+        const link = item.querySelector('a.search-product-link')?.href || '';
+        const deliveryTag = item.querySelector('.delivery-info')?.innerText ||
+                            item.querySelector('.badge.rocket')?.innerText || '';
+
+        return { title, price, rating, reviewCount, deliveryTag, image, link };
+      });
+    });
+
+    await browser.close();
+    res.json(data);
+  } catch (err) {
+    console.error('[Crawl Error]', err);
+    res.status(500).json({ error: 'Failed to crawl Coupang search results.' });
   }
 });
 
