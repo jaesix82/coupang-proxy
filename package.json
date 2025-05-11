@@ -10,6 +10,6 @@
     "crypto": "^1.0.1",
     "express": "^4.18.2",
     "querystring": "^0.2.1",
-    "@supabase/supabase-js": "^2.39.5"  // ✅ 이 줄 추가
+    "@supabase/supabase-js": "^2.39.5"
   }
 }
