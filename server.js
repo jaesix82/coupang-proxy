@@ -66,3 +66,13 @@ app.get("/test-coupang", async (req, res) => {
 app.listen(port, () => {
   console.log(`🚀 Coupang API proxy running on port ${port}`);
 });
+
+// ✅ Render 서버의 공인 IP 확인용 엔드포인트
+app.get("/ip", async (req, res) => {
+  try {
+    const response = await axios.get("https://ifconfig.me/ip");
+    res.send(`🌐 Render 서버의 공인 IP: ${response.data}`);
+  } catch (err) {
+    res.status(500).send("❌ 공인 IP를 가져오지 못했습니다.");
+  }
+});
