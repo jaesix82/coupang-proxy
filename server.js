@@ -2,14 +2,32 @@ const express = require("express");
 const axios = require("axios");
 const crypto = require("crypto");
 const querystring = require("querystring");
-// 기존 import 및 세팅 생략 (express, axios, crypto, querystring 등)
-
 const { createClient } = require("@supabase/supabase-js");
+
+const app = express(); // ✅ 빠졌던 부분!
+
+const port = process.env.PORT || 3000;
+
+const ACCESS_KEY = process.env.ACCESS_KEY_ACC1;
+const SECRET_KEY = process.env.SECRET_KEY_ACC1;
+const VENDOR_ID = process.env.VENDOR_ID_ACC1;
+
+const COUPANG_DOMAIN = "https://api-gateway.coupang.com";
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+// 쿠팡 시그니처 생성용 타임스탬프
+function getSignedDate() {
+  return new Date()
+    .toISOString()
+    .substr(2, 17)
+    .replace(/:/g, "")
+    .replace(/-/g, "") + "Z";
+}
+
+// ✅ 매출 데이터 받아서 Supabase에 업로드
 app.get("/fetch-revenue", async (req, res) => {
   const { recognitionDateFrom, recognitionDateTo } = req.query;
 
@@ -79,4 +97,8 @@ app.get("/fetch-revenue", async (req, res) => {
       message: err.response?.data || err.message,
     });
   }
+});
+
+app.listen(port, () => {
+  console.log(`🚀 Server running on port ${port}`);
 });
