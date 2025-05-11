@@ -5,9 +5,9 @@ const crypto = require("crypto");
 const app = express();
 const port = process.env.PORT || 3000;
 
-const ACCESS_KEY = process.env.COUPANG_ACCESS_KEY;
-const SECRET_KEY = process.env.COUPANG_SECRET_KEY;
-const VENDOR_ID = process.env.COUPANG_VENDOR_ID;
+const ACCESS_KEY = process.env.ACCESS_KEY_ACC1;
+const SECRET_KEY = process.env.SECRET_KEY_ACC1;
+const VENDOR_ID = process.env.VENDOR_ID_ACC1;
 
 const COUPANG_DOMAIN = "https://api-gateway.coupang.com";
 
