@@ -35,7 +35,7 @@ app.get("/ip", async (req, res) => {
 app.get("/test-coupang", async (req, res) => {
   const method = "GET";
   const path = "/v2/providers/seller_api/apis/api/v1/marketplace/seller-products";
-  const query = "status=APPROVED&limit=10";
+  const query = `status=APPROVED&limit=10&vendorId=${VENDOR_ID}`;
 
   const queryObj = querystring.parse(query);
   const queryStr = `?${querystring.stringify(queryObj)}`;
