@@ -12,12 +12,16 @@ const VENDOR_ID = process.env.VENDOR_ID_ACC1;
 
 const COUPANG_DOMAIN = "https://api-gateway.coupang.com";
 
-// ✅ 쿠팡 API에서 요구하는 ISO 8601 형식 (밀리초 제거)
+// ✅ 쿠팡 사양에 맞는 signed-date 포맷: YYMMDDTHHmmssZ
 function getSignedDate() {
-  return new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
+  return new Date()
+    .toISOString()
+    .substr(2, 17)               // 25-05-11T09:11:00
+    .replace(/:/g, '')
+    .replace(/-/g, '') + 'Z';    // 250511T091100Z
 }
 
-// ✅ Render 서버의 공인 IP 확인용
+// ✅ Render IP 확인용
 app.get("/ip", async (req, res) => {
   try {
     const response = await axios.get("https://ifconfig.me/ip");
@@ -31,33 +35,32 @@ app.get("/ip", async (req, res) => {
 app.get("/test-coupang", async (req, res) => {
   const method = "GET";
   const path = "/v2/providers/seller_api/apis/api/v1/marketplace/seller-products";
-  const query = "?status=APPROVED&limit=10";
+  const query = "status=APPROVED&limit=10";
 
-  const queryObj = querystring.parse(query.replace(/^\?/, ""));
+  const queryObj = querystring.parse(query);
   const queryStr = `?${querystring.stringify(queryObj)}`;
-
   const timestamp = getSignedDate();
-  const message = timestamp + method + path + queryStr;
 
-  // 🔐 서명 생성
+  const message = timestamp + method + path + query;
+
   const signature = crypto
     .createHmac("sha256", SECRET_KEY)
     .update(message)
-    .digest("base64");
+    .digest("hex");  // ← 공식은 hex
+
+  const authorization =
+    `CEA algorithm=HmacSHA256, access-key=${ACCESS_KEY}, signed-date=${timestamp}, signature=${signature}`;
 
   const headers = {
-    Authorization: `CEA algorithm=HmacSHA256, access-key=${ACCESS_KEY}, signed-date=${timestamp}, signature=${signature}`,
+    Authorization: authorization,
     "X-Requested-By": VENDOR_ID,
+    "Content-Type": "application/json",
   };
-
-  // 🐛 디버깅 로그 (원하면 주석 제거)
-  // console.log("🔐 signed-date:", timestamp);
-  // console.log("🔐 message:", message);
-  // console.log("🔐 signature:", signature);
 
   try {
     const fullUrl = `${COUPANG_DOMAIN}${path}${queryStr}`;
     const response = await axios.get(fullUrl, { headers });
+
     res.status(200).json({ status: "success", data: response.data });
   } catch (error) {
     res.status(500).json({
@@ -68,5 +71,5 @@ app.get("/test-coupang", async (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`🚀 Coupang API Proxy running on port ${port}`);
+  console.log(`🚀 Coupang Proxy Server running on port ${port}`);
 });
