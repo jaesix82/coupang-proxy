@@ -13,7 +13,7 @@ const COUPANG_DOMAIN = "https://api-gateway.coupang.com";
 
 app.get("/test-coupang", async (req, res) => {
   const method = "GET";
-  const urlPath = "/v2/providers/seller_api/apis/api/v1/marketplace/meta-category";
+  const urlPath = "/v2/providers/seller_api/apis/api/v1/marketplace/seller-products";
   const timestamp = String(Date.now());
 
   const signature = crypto
