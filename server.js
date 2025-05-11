@@ -73,3 +73,42 @@ app.get("/test-coupang", async (req, res) => {
 app.listen(port, () => {
   console.log(`🚀 Coupang Proxy Server running on port ${port}`);
 });
+
+app.get("/test-revenue", async (req, res) => {
+  const method = "GET";
+  const path = "/v2/providers/openapi/apis/api/v1/revenue-history";
+  const query = `vendorId=${VENDOR_ID}&recognitionDateFrom=2024-12-01&recognitionDateTo=2024-12-31&token=&maxPerPage=50`;
+
+  const timestamp = new Date()
+    .toISOString()
+    .substr(2, 17)
+    .replace(/:/g, '')
+    .replace(/-/g, '') + 'Z';
+
+  const message = timestamp + method + path + query;
+
+  const signature = crypto
+    .createHmac("sha256", SECRET_KEY)
+    .update(message)
+    .digest("hex");
+
+  const authorization =
+    `CEA algorithm=HmacSHA256, access-key=${ACCESS_KEY}, signed-date=${timestamp}, signature=${signature}`;
+
+  const headers = {
+    Authorization: authorization,
+    "Content-Type": "application/json",
+  };
+
+  try {
+    const fullUrl = `https://api-gateway.coupang.com${path}?${query}`;
+    const response = await axios.get(fullUrl, { headers });
+
+    res.status(200).json({ status: "success", data: response.data });
+  } catch (error) {
+    res.status(500).json({
+      status: "fail",
+      message: error.response?.data || error.message,
+    });
+  }
+});
