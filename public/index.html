@@ -19,15 +19,18 @@
 
   <script>
     function formatDate(date) {
-      return date.toISOString().slice(0, 19);
+      // 예: 2024-05-12T00:00:00
+      return date.toISOString().split(".")[0];
     }
 
-    async function fetchOrders(createdAtFrom, createdAtTo) {
+    async function fetchOrders(from, to) {
       const resultElem = document.getElementById("result");
       resultElem.innerText = "⏳ 요청 중...";
 
+      console.log("from:", from, "to:", to); // 🪵 디버그용
+
       try {
-        const res = await fetch(`/fetch-orders?createdAtFrom=${encodeURIComponent(createdAtFrom)}&createdAtTo=${encodeURIComponent(createdAtTo)}`);
+        const res = await fetch(`/fetch-orders?createdAtFrom=${encodeURIComponent(from)}&createdAtTo=${encodeURIComponent(to)}`);
         const data = await res.json();
 
         if (data.status === "success") {
@@ -42,8 +45,10 @@
 
     function fetchToday() {
       const now = new Date();
-      const from = new Date(now.setHours(0, 0, 0, 0));
-      const to = new Date(now.setHours(23, 59, 59, 999));
+      const from = new Date(now);
+      from.setHours(0, 0, 0, 0);
+      const to = new Date(now);
+      to.setHours(23, 59, 59, 999);
       fetchOrders(formatDate(from), formatDate(to));
     }
 
@@ -57,15 +62,18 @@
     }
 
     function fetchCustom() {
-      const from = document.getElementById("fromDate").value;
-      const to = document.getElementById("toDate").value;
+      const fromInput = document.getElementById("fromDate").value;
+      const toInput = document.getElementById("toDate").value;
 
-      if (!from || !to) {
+      if (!fromInput || !toInput) {
         alert("시작일과 종료일을 모두 입력해주세요.");
         return;
       }
 
-      fetchOrders(from, to);
+      const from = new Date(fromInput);
+      const to = new Date(toInput);
+
+      fetchOrders(formatDate(from), formatDate(to));
     }
   </script>
 </body>
