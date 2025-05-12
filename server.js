@@ -1,5 +1,3 @@
-app.use(express.static("public"));
-
 const express = require("express");
 const axios = require("axios");
 const crypto = require("crypto");
@@ -7,6 +5,8 @@ const querystring = require("querystring");
 const { createClient } = require("@supabase/supabase-js");
 
 const app = express(); // ✅ 빠졌던 부분!
+
+app.use(express.static("public"));
 
 const port = process.env.PORT || 3000;
 
