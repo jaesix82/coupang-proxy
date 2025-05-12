@@ -80,5 +80,65 @@
       fetchOrders(formatDate(from), formatDate(to));
     }
   </script>
+
+<h2>💰 쿠팡 매출 정산 데이터 수집기</h2>
+
+<button onclick="fetchRevenueToday()">오늘</button>
+<button onclick="fetchRevenueYesterday()">어제</button>
+<br><br>
+
+<label>시작일: <input type="date" id="revenueFromDate"></label>
+<label>종료일: <input type="date" id="revenueToDate"></label>
+<button onclick="fetchRevenueCustom()">기간 수집</button>
+
+<p id="revenueResult">⏳ 요청 전입니다.</p>
+
+<script>
+  async function fetchRevenue(from, to) {
+    const resultElem = document.getElementById("revenueResult");
+    resultElem.innerText = "⏳ 요청 중...";
+
+    try {
+      const res = await fetch(`/fetch-revenue?recognitionDateFrom=${from}&recognitionDateTo=${to}`);
+      const data = await res.json();
+
+      console.log("📥 서버 응답:", data);
+
+      if (data.status === "success") {
+        resultElem.innerText = `✅ ${data.inserted}건 저장 완료`;
+      } else {
+        resultElem.innerText = `⚠️ 실패: ${JSON.stringify(data.message, null, 2)}`;
+      }
+    } catch (e) {
+      resultElem.innerText = `❌ 오류: ${e.message}`;
+    }
+  }
+
+  function fetchRevenueToday() {
+    const today = new Date().toISOString().split("T")[0];
+    fetchRevenue(today, today);
+  }
+
+  function fetchRevenueYesterday() {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    const y = d.toISOString().split("T")[0];
+    fetchRevenue(y, y);
+  }
+
+  function fetchRevenueCustom() {
+    const from = document.getElementById("revenueFromDate").value;
+    const to = document.getElementById("revenueToDate").value;
+
+    if (!from || !to) {
+      alert("시작일과 종료일을 모두 입력해주세요.");
+      return;
+    }
+
+    fetchRevenue(from, to);
+  }
+</script>
+
+  
 </body>
 </html>
