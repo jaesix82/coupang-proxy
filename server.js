@@ -42,7 +42,7 @@ app.get("/fetch-revenue", async (req, res) => {
 
   const method = "GET";
   const path = "/v2/providers/openapi/apis/api/v1/revenue-history";
-  const query = `vendorId=${VENDOR_ID}&recognitionDateFrom=${recognitionDateFrom}&recognitionDateTo=${recognitionDateTo}&token=&maxPerPage=50`;
+  const query = `vendorId=${VENDOR_ID}&recognitionDateFrom=${recognitionDateFrom}&recognitionDateTo=${recognitionDateTo}&token=&maxPerPage=100`;
 
   const timestamp = getSignedDate();
   const message = timestamp + method + path + query;
