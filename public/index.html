@@ -19,7 +19,7 @@
 
   <script>
     function formatDate(date) {
-      // 예: 2024-05-12T00:00:00
+      // 예: 2025-05-12T00:00:00
       return date.toISOString().split(".")[0];
     }
 
@@ -27,18 +27,22 @@
       const resultElem = document.getElementById("result");
       resultElem.innerText = "⏳ 요청 중...";
 
-      console.log("from:", from, "to:", to); // 🪵 디버그용
+      console.log("📤 요청 날짜:", from, "~", to);
 
       try {
         const res = await fetch(`/fetch-orders?createdAtFrom=${encodeURIComponent(from)}&createdAtTo=${encodeURIComponent(to)}`);
         const data = await res.json();
 
+        console.log("📥 서버 응답:", data);
+
         if (data.status === "success") {
           resultElem.innerText = `✅ ${data.inserted}건 저장 완료`;
         } else {
-          resultElem.innerText = `⚠️ 실패: ${JSON.stringify(data.message)}`;
+          console.log("⚠️ 에러 메시지:", data.message);
+          resultElem.innerText = `⚠️ 실패: ${JSON.stringify(data.message, null, 2)}`;
         }
       } catch (e) {
+        console.log("❌ 예외 발생:", e);
         resultElem.innerText = `❌ 오류: ${e.message}`;
       }
     }
