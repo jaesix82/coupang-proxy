@@ -103,39 +103,44 @@ app.get("/fetch-revenue", async (req, res) => {
 
 // ✅ 쿠팡 오더시트 데이터 받아 Supabase에 저장
 app.get("/fetch-orders", async (req, res) => {
-  const { createdAtFrom, createdAtTo } = req.query;
-
-  if (!createdAtFrom || !createdAtTo) {
-    return res.status(400).json({
-      status: "fail",
-      message: "createdAtFrom, createdAtTo 쿼리 파라미터가 필요합니다.",
-    });
-  }
-
-  const method = "GET";
-  const path = "/v2/providers/openapi/apis/api/v1/ordersheets";
-  const query = `createdAtFrom=${createdAtFrom}&createdAtTo=${createdAtTo}&searchType=timeCreated&status=INSTRUCT_COMPLETED&status=DELIVERING&status=DELIVERY_COMPLETED&maxPerPage=50`;
-
-  const timestamp = getSignedDate();
-  const message = timestamp + method + path + query;
-
-  const signature = crypto
-    .createHmac("sha256", SECRET_KEY)
-    .update(message)
-    .digest("hex");
-
-  const authorization = `CEA algorithm=HmacSHA256, access-key=${ACCESS_KEY}, signed-date=${timestamp}, signature=${signature}`;
-  const headers = {
-    Authorization: authorization,
-    "Content-Type": "application/json",
-  };
-
   try {
+    const createdAtFrom = decodeURIComponent(req.query.createdAtFrom);
+    const createdAtTo = decodeURIComponent(req.query.createdAtTo);
+
+    if (!createdAtFrom || !createdAtTo) {
+      return res.status(400).json({
+        status: "fail",
+        message: "createdAtFrom, createdAtTo 쿼리 파라미터가 필요합니다.",
+      });
+    }
+
+    console.log("🕐 createdAtFrom:", createdAtFrom);
+    console.log("🕐 createdAtTo:", createdAtTo);
+
+    const method = "GET";
+    const path = "/v2/providers/openapi/apis/api/v1/ordersheets";
+    const query = `createdAtFrom=${createdAtFrom}&createdAtTo=${createdAtTo}&searchType=timeCreated&status=INSTRUCT_COMPLETED&status=DELIVERING&status=DELIVERY_COMPLETED&maxPerPage=50`;
+
+    const timestamp = getSignedDate();
+    const message = timestamp + method + path + query;
+
+    const signature = crypto
+      .createHmac("sha256", SECRET_KEY)
+      .update(message)
+      .digest("hex");
+
+    const authorization = `CEA algorithm=HmacSHA256, access-key=${ACCESS_KEY}, signed-date=${timestamp}, signature=${signature}`;
+    const headers = {
+      Authorization: authorization,
+      "Content-Type": "application/json",
+    };
+
     const fullUrl = `${COUPANG_DOMAIN}${path}?${query}`;
+    console.log("🔗 요청 URL:", fullUrl);
+
     const response = await axios.get(fullUrl, { headers });
 
     const records = [];
-
     for (const order of response.data.data) {
       if (order.items && order.items.length > 0) {
         for (const item of order.items) {
@@ -167,12 +172,14 @@ app.get("/fetch-orders", async (req, res) => {
 
     res.status(200).json({ status: "success", inserted: records.length });
   } catch (err) {
+    console.error("❌ 서버 에러:", err); // ✅ 여기 추가!
     res.status(500).json({
       status: "fail",
-      message: err.response?.data || err.message,
+      message: err.response?.data || err.message || "Unknown error",
     });
   }
 });
+
 
 
 app.listen(port, () => {
