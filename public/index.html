@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>쿠팡 오더시트 수집기</title>
+</head>
+<body>
+  <h2>📦 쿠팡 오더시트 수집기</h2>
+
+  <button onclick="fetchToday()">오늘</button>
+  <button onclick="fetchYesterday()">어제</button>
+  <br><br>
+
+  <label>시작일: <input type="datetime-local" id="fromDate"></label>
+  <label>종료일: <input type="datetime-local" id="toDate"></label>
+  <button onclick="fetchCustom()">기간 수집</button>
+
+  <p id="result">⏳ 요청 전입니다.</p>
+
+  <script>
+    function formatDate(date) {
+      return date.toISOString().slice(0, 19);
+    }
+
+    async function fetchOrders(createdAtFrom, createdAtTo) {
+      const resultElem = document.getElementById("result");
+      resultElem.innerText = "⏳ 요청 중...";
+
+      try {
+        const res = await fetch(`/fetch-orders?createdAtFrom=${encodeURIComponent(createdAtFrom)}&createdAtTo=${encodeURIComponent(createdAtTo)}`);
+        const data = await res.json();
+
+        if (data.status === "success") {
+          resultElem.innerText = `✅ ${data.inserted}건 저장 완료`;
+        } else {
+          resultElem.innerText = `⚠️ 실패: ${data.message}`;
+        }
+      } catch (e) {
+        resultElem.innerText = `❌ 오류: ${e.message}`;
+      }
+    }
+
+    function fetchToday() {
+      const now = new Date();
+      const from = new Date(now.setHours(0, 0, 0, 0));
+      const to = new Date(now.setHours(23, 59, 59, 999));
+      fetchOrders(formatDate(from), formatDate(to));
+    }
+
+    function fetchYesterday() {
+      const now = new Date();
+      const from = new Date(now.setDate(now.getDate() - 1));
+      from.setHours(0, 0, 0, 0);
+      const to = new Date(from);
+      to.setHours(23, 59, 59, 999);
+      fetchOrders(formatDate(from), formatDate(to));
+    }
+
+    function fetchCustom() {
+      const from = document.getElementById("fromDate").value;
+      const to = document.getElementById("toDate").value;
+
+      if (!from || !to) {
+        alert("시작일과 종료일을 모두 입력해주세요.");
+        return;
+      }
+
+      fetchOrders(from, to);
+    }
+  </script>
+</body>
+</html>
