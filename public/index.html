@@ -36,7 +36,7 @@
         if (data.status === "success") {
           resultElem.innerText = `✅ ${data.inserted}건 저장 완료`;
         } else {
-          resultElem.innerText = `⚠️ 실패: ${data.message}`;
+          resultElem.innerText = `⚠️ 실패: ${JSON.stringify(data.message)}`;
         }
       } catch (e) {
         resultElem.innerText = `❌ 오류: ${e.message}`;
